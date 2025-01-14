@@ -1,4 +1,4 @@
-name: Update MetaCode
+name: Generate and Push Protobuf Files
 
 on:
   push:
@@ -8,12 +8,22 @@ on:
       - 'pb/**/*.proto'  # 只在 pb 目录下的 .proto 文件发生变化时触发
 
 jobs:
-  update_repo_meta_code:
+  generate_and_push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository Meta
+      - name: Checkout Meta Repository
         uses: actions/checkout@v2
+        with:
+          repository: JK407/meta  # 当前仓库
+          token: ${{ secrets.GEN_PROTO }}  # 使用 GitHub 提供的 token
+
+      - name: Checkout MetaCode Repository
+        uses: actions/checkout@v2
+        with:
+          repository: JK407/metaCode  # 目标仓库
+          path: metaCode  # 将目标仓库检出到 metaCode 目录
+          token: ${{ secrets.GEN_PROTO }}  # 使用 GitHub 提供的 token
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -25,15 +35,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
 
-      - name: Create Temporary Go Module
-        run: |
-          mkdir temp-module
-          cd temp-module
-          go mod init temp-module  # 创建一个临时的 Go 模块
-
       - name: Install protoc-gen-go and protoc-gen-go-grpc
         run: |
-          cd temp-module
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
@@ -41,34 +44,22 @@ jobs:
         run: |
           # 遍历 pb 目录下的所有 .proto 文件，生成对应的 pb.go 和 rpc.pb.go 文件
           for proto_file in $(find pb -name '*.proto'); do
-            # 获取 go_package 的值
-            go_package=$(grep -m 1 '^option go_package=' "$proto_file" | sed 's/option go_package="//;s/";//')
-            # 提取目标路径
-            target_path=$(echo "$go_package" | sed 's|https://github.com/JK407/metaCode||;s|/pb/|/|g')
+            # 获取 package 名称
+            package_name=$(grep -m 1 '^package ' "$proto_file" | awk '{print $2}' | tr -d ';')
             # 创建对应的目录
-            mkdir -p "generated$target_path"
+            mkdir -p "metaCode/pb/$package_name"
             # 生成 pb.go 和 rpc.pb.go 文件
-            protoc --go_out="generated$target_path" --go-grpc_out="generated$target_path" "$proto_file"
+            protoc --go_out="metaCode/pb/$package_name" --go-grpc_out="metaCode/pb/$package_name" "$proto_file"
           done
           # 调试信息：列出生成的文件
           echo "Generated files:"
-          find generated -name '*.go'
+          find metaCode/pb -name '*.go'
 
-      - name: Ensure Target Directory Exists
+      - name: Commit and Push Changes to MetaCode
         run: |
-          # 创建目标路径，确保目标目录存在
-          mkdir -p pb  # 确保目标路径存在
-
-      - name: Copy Generated Files to Repository MetaCode
-        run: |
-          # 复制生成的 pb.go 和 rpc.pb.go 文件到 metaCode 仓库的对应目录
-          cp -r generated/* pb/  # 确保目标路径存在
-
-      - name: Commit and Push Changes to Repository MetaCode
-        run: |
-          cd pb/
+          cd metaCode
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
-          git add .
-          git commit -m "Update generated pb.go and rpc.pb.go files from Repository Meta"
+          git add pb/*.go
+          git commit -m "Update generated pb.go and rpc.pb.go files"
           git push
