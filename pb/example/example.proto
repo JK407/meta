@@ -8,6 +8,7 @@ option go_package="https://github.com/JK407/metaCode/pb/helloWorld";
 
 
 // 定义服务接口
+
 service Greeter {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc SayHi (HelloRequest) returns (HelloReply) {}
