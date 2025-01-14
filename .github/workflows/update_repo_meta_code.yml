@@ -20,12 +20,18 @@ jobs:
         with:
           go-version: '1.21'  # 设置 Go 版本
 
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Install protoc-gen-go and protoc-gen-go-grpc
+        run: |
+          go get google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
       - name: Generate pb.go and rpc.pb.go files
         run: |
-          # 安装 protoc 和 Go 插件
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          
           # 遍历 pb 目录下的所有子目录，生成对应的 pb.go 和 rpc.pb.go 文件
           for proto_file in $(find pb -name '*.proto'); do
             # 获取 package 名称
