@@ -1,0 +1,62 @@
+name: Update MetaCode
+
+on:
+  push:
+    branches:
+      - master  # 监听 master 分支的推送事件
+    paths:
+      - 'pb/**/*.proto'  # 只在 pb 目录下的 .proto 文件发生变化时触发
+
+jobs:
+  update_repo_meta_code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Meta
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'  # 设置 Go 版本
+
+      - name: Generate pb.go and rpc.pb.go files
+        run: |
+          # 安装 protoc 和 Go 插件
+          go get google.golang.org/protobuf/cmd/protoc-gen-go
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+          
+          # 遍历 pb 目录下的所有子目录，生成对应的 pb.go 和 rpc.pb.go 文件
+          for proto_file in $(find pb -name '*.proto'); do
+            # 获取 package 名称
+            package_name=$(grep -m 1 '^package ' "$proto_file" | awk '{print $2}' | tr '.' '/')
+            # 创建对应的目录
+            mkdir -p "generated/$package_name"
+            # 生成 pb.go 和 rpc.pb.go 文件
+            protoc --go_out="generated/$package_name" --go-grpc_out="generated/$package_name" "$proto_file"
+          done
+
+      - name: Checkout Repository MetaCode
+        uses: actions/checkout@v2
+        with:
+          repository: JK407/metaCode  # 替换为仓库 B 的路径
+          token: ${{ secrets.protobuf }}  # 使用 GitHub 提供的 token
+
+      - name: Ensure Target Directory Exists
+        run: |
+          # 创建目标路径，确保目标目录存在
+          mkdir -p pb  # 确保目标路径存在
+
+      - name: Copy Generated Files to Repository MetaCode
+        run: |
+          # 复制生成的 pb.go 和 rpc.pb.go 文件到 metaCode 仓库的对应目录
+          cp -r generated/* pb/  # 确保目标路径存在
+
+      - name: Commit and Push Changes to Repository MetaCode
+        run: |
+          cd pb/
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add .
+          git commit -m "Update generated pb.go and rpc.pb.go files from Repository Meta"
+          git push
