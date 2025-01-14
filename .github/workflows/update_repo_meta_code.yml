@@ -25,10 +25,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
 
+      - name: Create Temporary Go Module
+        run: |
+          mkdir temp-module
+          cd temp-module
+          go mod init temp-module  # 创建一个临时的 Go 模块
+
       - name: Install protoc-gen-go and protoc-gen-go-grpc
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          cd temp-module
+          go get google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
       - name: Generate pb.go and rpc.pb.go files
         run: |
