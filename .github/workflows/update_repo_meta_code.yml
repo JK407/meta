@@ -49,10 +49,7 @@ jobs:
             # 创建对应的目录
             mkdir -p "metaCode/pb/$package_name"
             # 生成 pb.go 和 rpc.pb.go 文件
-            protoc --go_out="metaCode/pb/$package_name" --go-grpc_out="metaCode/pb/$package_name" \
-              --go_opt=M"$proto_file=github.com/JK407/metaCode/pb/$package_name" \
-              --go-grpc_opt=M"$proto_file=github.com/JK407/metaCode/pb/$package_name" \
-              "$proto_file"
+            protoc --go_out="metaCode/pb/$package_name" --go-grpc_out="metaCode/pb/$package_name" "$proto_file"
           done
           # 调试信息：列出生成的文件
           echo "Generated files:"
