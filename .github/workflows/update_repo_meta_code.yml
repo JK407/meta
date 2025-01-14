@@ -39,24 +39,20 @@ jobs:
 
       - name: Generate pb.go and rpc.pb.go files
         run: |
-          # 遍历 pb 目录下的所有子目录，生成对应的 pb.go 和 rpc.pb.go 文件
+          # 遍历 pb 目录下的所有 .proto 文件，生成对应的 pb.go 和 rpc.pb.go 文件
           for proto_file in $(find pb -name '*.proto'); do
-            # 获取 package 名称
-            package_name=$(grep -m 1 '^package ' "$proto_file" | awk '{print $2}' | tr '.' '/')
+            # 获取 go_package 的值
+            go_package=$(grep -m 1 '^option go_package=' "$proto_file" | sed 's/option go_package="//;s/";//')
+            # 提取目标路径
+            target_path=$(echo "$go_package" | sed 's|https://github.com/JK407/metaCode||;s|/pb/|/|g')
             # 创建对应的目录
-            mkdir -p "generated/$package_name"
+            mkdir -p "generated$target_path"
             # 生成 pb.go 和 rpc.pb.go 文件
-            protoc --go_out="generated/$package_name" --go-grpc_out="generated/$package_name" "$proto_file"
+            protoc --go_out="generated$target_path" --go-grpc_out="generated$target_path" "$proto_file"
           done
           # 调试信息：列出生成的文件
           echo "Generated files:"
           find generated -name '*.go'
-
-      - name: Checkout Repository MetaCode
-        uses: actions/checkout@v2
-        with:
-          repository: JK407/metaCode  # 替换为仓库 B 的路径
-          token: ${{ secrets.GEN_PROTO }}  # 使用 GitHub 提供的 token
 
       - name: Ensure Target Directory Exists
         run: |
