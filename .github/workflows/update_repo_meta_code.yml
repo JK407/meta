@@ -20,17 +20,6 @@ jobs:
         with:
           go-version: '1.21'  # 设置 Go 版本
 
-      - name: Install protoc
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y protobuf-compiler
-
-      - name: Create Temporary Go Module
-        run: |
-          mkdir temp-module
-          cd temp-module
-          go mod init temp-module  # 创建一个临时的 Go 模块
-
       - name: Install protoc-gen-go and protoc-gen-go-grpc
         run: |
           cd temp-module
@@ -48,6 +37,9 @@ jobs:
             # 生成 pb.go 和 rpc.pb.go 文件
             protoc --go_out="generated/$package_name" --go-grpc_out="generated/$package_name" "$proto_file"
           done
+          # 调试信息：列出生成的文件
+          echo "Generated files:"
+          find generated -name '*.go'
 
       - name: Checkout Repository MetaCode
         uses: actions/checkout@v2
