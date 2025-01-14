@@ -44,12 +44,15 @@ jobs:
         run: |
           # 遍历 pb 目录下的所有 .proto 文件，生成对应的 pb.go 和 rpc.pb.go 文件
           for proto_file in $(find pb -name '*.proto'); do
-            # 获取 package 名称，确保只提取 package 声明
-            package_name=$(grep -oP '^\s*package\s+\K\w+' "$proto_file")
+            # 获取 package 名称
+            package_name=$(grep -m 1 '^package ' "$proto_file" | awk '{print $2}' | tr -d ';')
             # 创建对应的目录
             mkdir -p "metaCode/pb/$package_name"
-            # 生成 pb.go 和 rpc.pb.go 文件，覆盖 go_package 设置
-            protoc --go_out="metaCode/pb/$package_name:${package_name}" --go-grpc_out="metaCode/pb/$package_name:${package_name}" "$proto_file"
+            # 生成 pb.go 和 rpc.pb.go 文件
+            protoc --go_out="metaCode/pb/$package_name" --go-grpc_out="metaCode/pb/$package_name" \
+              --go_opt=M"$proto_file=github.com/JK407/metaCode/pb/$package_name" \
+              --go-grpc_opt=M"$proto_file=github.com/JK407/metaCode/pb/$package_name" \
+              "$proto_file"
           done
           # 调试信息：列出生成的文件
           echo "Generated files:"
