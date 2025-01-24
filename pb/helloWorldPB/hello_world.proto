@@ -1,17 +1,10 @@
 syntax = "proto3";
 
 
-package helloWorld;
+package helloWorldPB;
 
 // 注意：这里 go_package 指定的是协议生成文件 pb.go 在 git 上的地址，不要和上面的服务的 git 仓库地址一样
-option go_package="https://github.com/JK407/metaCode/pb/helloWorld";
-
-
-// 定义服务接口
-service Greeter {
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
-  rpc SayHi (HelloRequest) returns (HelloReply) {}
-}
+option go_package="./";
 
 // 请求参数
 message HelloRequest {
@@ -21,4 +14,10 @@ message HelloRequest {
 // 响应参数
 message HelloReply {
   string msg = 1;
+}
+
+// 定义服务接口
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc SayHi (HelloRequest) returns (HelloReply) {}
 }
