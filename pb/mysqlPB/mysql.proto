@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package mysqlPB;
+
+// 数据库连接请求消息
+message ConnectRequest {
+  string host = 1;        // 数据库主机
+  int32 port = 2;         // 数据库端口
+  string user = 3;        // 数据库用户名
+  string password = 4;    // 数据库密码
+  string database = 5;    // 数据库名称
+}
+
+// 数据库连接响应消息
+message ConnectResponse {
+  bool success = 1;       // 连接是否成功
+  string message = 2;     // 连接结果消息
+}
+
+// 数据库断开连接请求消息
+message DisconnectRequest {
+  string connection_id = 1; // 连接 ID
+}
+
+// 数据库断开连接响应消息
+message DisconnectResponse {
+  bool success = 1;       // 断开连接是否成功
+  string message = 2;     // 断开连接结果消息
+}
+
+// 执行查询请求消息
+message ExecuteQueryRequest {
+  string connection_id = 1; // 连接 ID
+  string query = 2;          // 要执行的 SQL 查询
+}
+
+// 执行查询响应消息
+message ExecuteQueryResponse {
+  bool success = 1;         // 查询是否成功
+  string message = 2;       // 查询结果消息
+  repeated string results = 3; // 查询结果，假设为字符串数组
+}
+
+
+// MySQL 服务定义
+service MySQLService {
+  // 连接到数据库
+  rpc Connect(ConnectRequest) returns (ConnectResponse);
+
+  // 断开与数据库的连接
+  rpc Disconnect(DisconnectRequest) returns (DisconnectResponse);
+
+  // 执行 SQL 查询
+  rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
+}
