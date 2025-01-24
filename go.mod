@@ -1,4 +1,4 @@
-module github.com/JK407/meta/pb
+module github.com/JK407/meta
 
 go 1.23.1
 
