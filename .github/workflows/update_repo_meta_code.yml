@@ -40,7 +40,30 @@ jobs:
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-      - name: Generate pb.go and rpc.pb.go files
+      - name: Generate pb.go and rpc.pb.go files in Meta Repository
+        run: |
+          # 遍历 pb 目录下的所有 .proto 文件，生成对应的 pb.go 和 rpc.pb.go 文件
+          for proto_file in $(find pb -name '*.proto'); do
+            # 获取 package 名称
+            package_name=$(grep -m 1 '^package ' "$proto_file" | awk '{print $2}' | tr -d ';')
+            # 创建对应的目录
+            mkdir -p "pb/$package_name"
+            # 生成 pb.go 和 rpc.pb.go 文件
+            protoc --go_out="pb/$package_name" --go-grpc_out="pb/$package_name" "$proto_file"
+          done
+          # 调试信息：列出生成的文件
+          echo "Generated files in Meta Repository:"
+          find pb -name '*.go'
+
+      - name: Commit and Push Changes to Meta Repository
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add pb/**/*.go  # 确保添加所有生成的 .go 文件
+          git commit -m "Update generated pb.go and rpc.pb.go files" || echo "No changes to commit"
+          git push
+
+      - name: Generate pb.go and rpc.pb.go files in MetaCode Repository
         run: |
           # 遍历 pb 目录下的所有 .proto 文件，生成对应的 pb.go 和 rpc.pb.go 文件
           for proto_file in $(find pb -name '*.proto'); do
