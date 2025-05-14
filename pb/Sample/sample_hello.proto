@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-  package SampleHelloPB;
+package SampleHelloPB;
 
 // 注意：这里 go_package 指定的是协议生成文件 pb.go 在 git 上的地址，不要和上面的服务的 git 仓库地址一样
 option go_package="./";
